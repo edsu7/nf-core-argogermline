@@ -10,24 +10,7 @@
             "type": "object",
             "fa_icon": "fas fa-terminal",
             "description": "Define where the pipeline should find input data and save output data.",
-            "required": ["input", "outdir"],
             "properties": {
-                "input": {
-                    "type": "string",
-                    "format": "file-path",
-                    "mimetype": "text/csv",
-                    "pattern": "^\\S+\\.csv$",
-                    "schema": "assets/schema_input.json",
-                    "description": "Path to comma-separated file containing information about the samples in the experiment.",
-                    "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row. See [usage docs](https://nf-co.re/argogermline/usage#samplesheet-input).",
-                    "fa_icon": "fas fa-file-csv"
-                },
-                "outdir": {
-                    "type": "string",
-                    "format": "directory-path",
-                    "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
-                    "fa_icon": "fas fa-folder-open"
-                },
                 "email": {
                     "type": "string",
                     "description": "Email address for completion summary.",
@@ -53,15 +36,6 @@
                     "description": "Name of iGenomes reference.",
                     "fa_icon": "fas fa-book",
                     "help_text": "If using a reference genome configured in the pipeline using iGenomes, use this parameter to give the ID for the reference. This is then used to build the full paths for all required reference genome files e.g. `--genome GRCh38`. \n\nSee the [nf-core website docs](https://nf-co.re/usage/reference_genomes) for more details."
-                },
-                "fasta": {
-                    "type": "string",
-                    "format": "file-path",
-                    "mimetype": "text/plain",
-                    "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$",
-                    "description": "Path to FASTA genome file.",
-                    "help_text": "This parameter is *mandatory* if `--genome` is not specified. If you don't have a BWA index available this will be generated for you automatically. Combine with `--save_reference` to save BWA index for future runs.",
-                    "fa_icon": "far fa-file-code"
                 },
                 "igenomes_base": {
                     "type": "string",
@@ -265,6 +239,160 @@
                     "help_text": "By default, parameters set as _hidden_ in the schema are not shown on the command line when a user runs with `--help`. Specifying this option will tell the pipeline to show all parameters."
                 }
             }
+        },
+        "icgc_argo_specific": {
+            "title": "ICGC-ARGO specific",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "score_url_download": {
+                    "type": "string",
+                    "default": "None",
+                    "hidden": true
+                },
+                "score_url_upload": {
+                    "type": "string",
+                    "default": "None",
+                    "hidden": true
+                },
+                "score_container_version": {
+                    "type": "string",
+                    "default": "None"
+                },
+                "transport_parallel": {
+                    "type": "string",
+                    "default": "None"
+                },
+                "transport_mem": {
+                    "type": "string",
+                    "default": "None"
+                },
+                "score_container": {
+                    "type": "string",
+                    "default": "None"
+                },
+                "song_container_version": {
+                    "type": "string",
+                    "default": "None"
+                },
+                "score_url": {
+                    "type": "string",
+                    "default": "None",
+                    "hidden": true
+                },
+                "song_url": {
+                    "type": "string",
+                    "default": "None",
+                    "hidden": true
+                },
+                "song_container": {
+                    "type": "string",
+                    "default": "None"
+                },
+                "song_url_upload": {
+                    "type": "string",
+                    "default": "None",
+                    "hidden": true
+                },
+                "song_url_download": {
+                    "type": "string",
+                    "default": "None",
+                    "hidden": true
+                }
+            }
+        },
+        "reference_files": {
+            "title": "Reference Files",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "known_indels_tbi": {
+                    "type": "string"
+                },
+                "known_indels": {
+                    "type": "string"
+                },
+                "intervals_bed_gz_tbi": {
+                    "type": "string"
+                },
+                "intervals_bed_gz": {
+                    "type": "string"
+                },
+                "intervals_bed": {
+                    "type": "string"
+                },
+                "dbsnp_tbi": {
+                    "type": "string"
+                },
+                "known_snps_tbi": {
+                    "type": "string"
+                },
+                "known_snps": {
+                    "type": "string"
+                },
+                "fasta_fai": {
+                    "type": "string"
+                },
+                "fasta": {
+                    "type": "string"
+                },
+                "dbsnp": {
+                    "type": "string"
+                },
+                "bwa": {
+                    "type": "string"
+                },
+                "dict": {
+                    "type": "string"
+                }
+            }
+        },
+        "user_supplied_parameters": {
+            "title": "User supplied parameters",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "nucleotides_per_second": {
+                    "type": "integer",
+                    "default": 1000,
+                    "hidden": true
+                },
+                "analysis_id": {
+                    "type": "string"
+                },
+                "study_id": {
+                    "type": "string",
+                    "default": "None"
+                },
+                "tools": {
+                    "type": "string"
+                },
+                "api_token": {
+                    "type": "string",
+                    "default": "None"
+                },
+                "outdir": {
+                    "type": "string",
+                    "default": "None"
+                },
+                "local": {
+                    "type": "boolean",
+                    "description": "Save output to local"
+                },
+                "cleanup": {
+                    "type": "boolean",
+                    "hidden": true,
+                    "default": true
+                },
+                "wes": {
+                    "type": "boolean",
+                    "description": "WES or WGS"
+                }
+            },
+            "required": ["analysis_id", "study_id", "api_token"]
         }
     },
     "allOf": [
@@ -282,6 +410,15 @@
         },
         {
             "$ref": "#/definitions/generic_options"
+        },
+        {
+            "$ref": "#/definitions/icgc_argo_specific"
+        },
+        {
+            "$ref": "#/definitions/reference_files"
+        },
+        {
+            "$ref": "#/definitions/user_supplied_parameters"
         }
     ]
 }

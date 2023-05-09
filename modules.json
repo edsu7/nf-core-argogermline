@@ -2,12 +2,87 @@
     "name": "nf-core/argogermline",
     "homePage": "https://github.com/nf-core/argogermline",
     "repos": {
+        "https://github.com/icgc-argo-workflows/argo-modules.git": {
+            "modules": {
+                "icgc-argo-workflows": {
+                    "cleanup": {
+                        "branch": "main",
+                        "git_sha": "517b0a82ed697564891e18ff5dba35a70f9da225",
+                        "installed_by": ["modules"]
+                    },
+                    "payload/germlinevariant": {
+                        "branch": "germline_variant_payload",
+                        "git_sha": "26efb189383a035fcf8ccdecef7f91d06d6f75c6",
+                        "installed_by": ["modules"]
+                    },
+                    "score/download": {
+                        "branch": "main",
+                        "git_sha": "92aa620385099e94401c22b8633cc55ed34ca10e",
+                        "installed_by": ["song_score_download"]
+                    },
+                    "score/upload": {
+                        "branch": "main",
+                        "git_sha": "92aa620385099e94401c22b8633cc55ed34ca10e",
+                        "installed_by": ["song_score_upload"]
+                    },
+                    "song/get": {
+                        "branch": "main",
+                        "git_sha": "92aa620385099e94401c22b8633cc55ed34ca10e",
+                        "installed_by": ["song_score_download"]
+                    },
+                    "song/manifest": {
+                        "branch": "main",
+                        "git_sha": "92aa620385099e94401c22b8633cc55ed34ca10e",
+                        "installed_by": ["song_score_upload"]
+                    },
+                    "song/publish": {
+                        "branch": "main",
+                        "git_sha": "92aa620385099e94401c22b8633cc55ed34ca10e",
+                        "installed_by": ["song_score_upload"]
+                    },
+                    "song/submit": {
+                        "branch": "main",
+                        "git_sha": "92aa620385099e94401c22b8633cc55ed34ca10e",
+                        "installed_by": ["song_score_upload"]
+                    }
+                }
+            },
+            "subworkflows": {
+                "icgc-argo-workflows": {
+                    "song_score_download": {
+                        "branch": "main",
+                        "git_sha": "92aa620385099e94401c22b8633cc55ed34ca10e",
+                        "installed_by": ["subworkflows"]
+                    },
+                    "song_score_upload": {
+                        "branch": "main",
+                        "git_sha": "92aa620385099e94401c22b8633cc55ed34ca10e",
+                        "installed_by": ["subworkflows"]
+                    }
+                }
+            }
+        },
         "https://github.com/nf-core/modules.git": {
             "modules": {
                 "nf-core": {
+                    "bcftools/sort": {
+                        "branch": "master",
+                        "git_sha": "4a21e4cca35e72ec059abd67f790e0b192ce5d81",
+                        "installed_by": ["modules"]
+                    },
+                    "cnvkit/batch": {
+                        "branch": "master",
+                        "git_sha": "a184dcaac057fbc82bffc1258fe1648993e346a9",
+                        "installed_by": ["modules"]
+                    },
                     "custom/dumpsoftwareversions": {
                         "branch": "master",
                         "git_sha": "c8e35eb2055c099720a75538d1b8adb3fb5a464c",
+                        "installed_by": ["modules"]
+                    },
+                    "deepvariant": {
+                        "branch": "master",
+                        "git_sha": "0f8a77ff00e65eaeebc509b8156eaa983192474b",
                         "installed_by": ["modules"]
                     },
                     "fastqc": {
@@ -15,7 +90,102 @@
                         "git_sha": "c8e35eb2055c099720a75538d1b8adb3fb5a464c",
                         "installed_by": ["modules"]
                     },
+                    "freebayes": {
+                        "branch": "master",
+                        "git_sha": "0f8a77ff00e65eaeebc509b8156eaa983192474b",
+                        "installed_by": ["modules"]
+                    },
+                    "gatk4/applybqsr": {
+                        "branch": "master",
+                        "git_sha": "a252064ec62dc690a59760f7be482d37a02ecd99",
+                        "installed_by": ["modules"]
+                    },
+                    "gatk4/applyvqsr": {
+                        "branch": "master",
+                        "git_sha": "c8e35eb2055c099720a75538d1b8adb3fb5a464c",
+                        "installed_by": ["modules"]
+                    },
+                    "gatk4/baserecalibrator": {
+                        "branch": "master",
+                        "git_sha": "a252064ec62dc690a59760f7be482d37a02ecd99",
+                        "installed_by": ["modules"]
+                    },
+                    "gatk4/cnnscorevariants": {
+                        "branch": "master",
+                        "git_sha": "643756685546fa61f5c8fba439af746c090b9180",
+                        "installed_by": ["modules"]
+                    },
+                    "gatk4/filtervarianttranches": {
+                        "branch": "master",
+                        "git_sha": "643756685546fa61f5c8fba439af746c090b9180",
+                        "installed_by": ["modules"]
+                    },
+                    "gatk4/gatherbqsrreports": {
+                        "branch": "master",
+                        "git_sha": "a252064ec62dc690a59760f7be482d37a02ecd99",
+                        "installed_by": ["modules"]
+                    },
+                    "gatk4/genomicsdbimport": {
+                        "branch": "master",
+                        "git_sha": "34c17664b54e3b45faf4e32b52bf4086ca249afe",
+                        "installed_by": ["modules"]
+                    },
+                    "gatk4/genotypegvcfs": {
+                        "branch": "master",
+                        "git_sha": "c8e35eb2055c099720a75538d1b8adb3fb5a464c",
+                        "installed_by": ["modules"]
+                    },
+                    "gatk4/haplotypecaller": {
+                        "branch": "master",
+                        "git_sha": "0f8a77ff00e65eaeebc509b8156eaa983192474b",
+                        "installed_by": ["modules"]
+                    },
+                    "gatk4/mergevcfs": {
+                        "branch": "master",
+                        "git_sha": "c8e35eb2055c099720a75538d1b8adb3fb5a464c",
+                        "installed_by": ["modules"]
+                    },
+                    "gatk4/variantrecalibrator": {
+                        "branch": "master",
+                        "git_sha": "c8e35eb2055c099720a75538d1b8adb3fb5a464c",
+                        "installed_by": ["modules"]
+                    },
+                    "manta/germline": {
+                        "branch": "master",
+                        "git_sha": "c8e35eb2055c099720a75538d1b8adb3fb5a464c",
+                        "installed_by": ["modules"]
+                    },
                     "multiqc": {
+                        "branch": "master",
+                        "git_sha": "c8e35eb2055c099720a75538d1b8adb3fb5a464c",
+                        "installed_by": ["modules"]
+                    },
+                    "samtools/index": {
+                        "branch": "master",
+                        "git_sha": "0f8a77ff00e65eaeebc509b8156eaa983192474b",
+                        "installed_by": ["modules"]
+                    },
+                    "samtools/mpileup": {
+                        "branch": "master",
+                        "git_sha": "0f8a77ff00e65eaeebc509b8156eaa983192474b",
+                        "installed_by": ["modules"]
+                    },
+                    "strelka/germline": {
+                        "branch": "master",
+                        "git_sha": "2154380d62feecfa0446c7c2fe247b2c761963af",
+                        "installed_by": ["modules"]
+                    },
+                    "tabix/bgziptabix": {
+                        "branch": "master",
+                        "git_sha": "da53f7da4ff34b920bb3f186d151184bd440e3b5",
+                        "installed_by": ["modules"]
+                    },
+                    "tabix/tabix": {
+                        "branch": "master",
+                        "git_sha": "c8e35eb2055c099720a75538d1b8adb3fb5a464c",
+                        "installed_by": ["modules"]
+                    },
+                    "tiddit/sv": {
                         "branch": "master",
                         "git_sha": "c8e35eb2055c099720a75538d1b8adb3fb5a464c",
                         "installed_by": ["modules"]
