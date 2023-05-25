@@ -70,9 +70,24 @@
                         "git_sha": "4a21e4cca35e72ec059abd67f790e0b192ce5d81",
                         "installed_by": ["modules"]
                     },
+                    "cnvkit/antitarget": {
+                        "branch": "master",
+                        "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
+                        "installed_by": ["modules"]
+                    },
                     "cnvkit/batch": {
                         "branch": "master",
                         "git_sha": "a184dcaac057fbc82bffc1258fe1648993e346a9",
+                        "installed_by": ["modules"]
+                    },
+                    "cnvkit/export": {
+                        "branch": "master",
+                        "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
+                        "installed_by": ["modules"]
+                    },
+                    "cnvkit/reference": {
+                        "branch": "master",
+                        "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
                         "installed_by": ["modules"]
                     },
                     "custom/dumpsoftwareversions": {

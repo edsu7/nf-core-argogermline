@@ -34,6 +34,7 @@ workflow GERMLINE_VARIANT_FREEBAYES {
         [], [], [])
     ch_versions = ch_versions.mix(FREEBAYES.out.versions)
 
+    //Coordinate sort VCF file
     BCFTOOLS_SORT(FREEBAYES.out.vcf)
     ch_versions = ch_versions.mix(BCFTOOLS_SORT.out.versions)
 
@@ -46,7 +47,7 @@ workflow GERMLINE_VARIANT_FREEBAYES {
     //Index if no intervals
     TABIX_VC_FREEBAYES(bcftools_vcf_out.no_intervals)
 
-
+    //Merge if intervals
     MERGE_FREEBAYES(
         bcftools_vcf_out.intervals
             .map{ meta, vcf ->
@@ -62,6 +63,7 @@ workflow GERMLINE_VARIANT_FREEBAYES {
         dict.map{ it -> [[id:it[0].baseName], it]})
     ch_versions = ch_versions.mix(MERGE_FREEBAYES.out.versions)
 
+    //Combine split channel
     freebayes_vcf = Channel.empty().mix(
                     MERGE_FREEBAYES.out.vcf,
                     bcftools_vcf_out.no_intervals)
@@ -89,7 +91,13 @@ workflow GERMLINE_VARIANT_FREEBAYES {
     .combine(analysis_json)
     .map {metaA,vcf,metaB,tbi,analysis_json ->
     [
-        [ id : metaA.id,
+        [
+            id : metaA.id,
+            experimentalStrategy : metaA.experimentalStrategy,
+            genomeBuild : metaA.genomeBuild,
+            tumourNormalDesignation : metaA.tumourNormalDesignation,
+            sampleType : metaA.sampleType ,
+            gender : metaA.gender,
             study_id : params.study_id,
             tool : "freebayes"
         ],
@@ -99,11 +107,10 @@ workflow GERMLINE_VARIANT_FREEBAYES {
     //Generate payload
     PAYLOAD_GERMLINEVARIANT(
         ch_payload,
-        "",
-        "",
         ch_versions.unique().collectFile(name: 'collated_versions.yml'),
-        "freebayes"
+        false
     )
+
 
     //Gather temporary files
     ch_cleanup=FREEBAYES.out.vcf.map{meta,vcf -> [vcf]}

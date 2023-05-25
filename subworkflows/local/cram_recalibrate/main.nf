@@ -28,9 +28,13 @@ workflow CRAM_RECALIBRATE {
         cram_intervals = cram.combine(intervals)
         .map{ meta, cram, crai, intervals, num_intervals ->
                 intervals_new = num_intervals == 0 ? [] : intervals
-
                 [[
-                    id:             meta.id,
+                    experimentalStrategy : meta.experimentalStrategy,
+                    genomeBuild : meta.genomeBuild ,
+                    tumourNormalDesignation : meta.tumourNormalDesignation,
+                    sampleType : meta.sampleType,
+                    gender : meta.gender,
+                    id : meta.id,
                     num_intervals:  num_intervals
                 ],
                 cram, crai, intervals_new]
@@ -46,7 +50,12 @@ workflow CRAM_RECALIBRATE {
         ch_cram_applybqsr = cram_intervals.combine(GATK4_BASERECALIBRATOR.out.table)
             .map{ meta, cram, crai, intervals, num_intervals,recal ->
                  [[
-                    id: meta.id
+                    experimentalStrategy : meta.experimentalStrategy,
+                    genomeBuild : meta.genomeBuild ,
+                    tumourNormalDesignation : meta.tumourNormalDesignation,
+                    sampleType : meta.sampleType,
+                    gender : meta.gender,
+                    id : meta.id,
                  ],
                  cram,crai,recal,intervals]
              }
@@ -66,7 +75,12 @@ workflow CRAM_RECALIBRATE {
         cram_crai = GATK4_APPLYBQSR.out.cram.combine(SAMTOOLS_INDEX.out.crai)
             .map{ metaA, cram, metaB, crai ->
             [[
-                id: metaA.id
+                experimentalStrategy : metaA.experimentalStrategy,
+                genomeBuild : metaA.genomeBuild ,
+                tumourNormalDesignation : metaA.tumourNormalDesignation,
+                sampleType : metaA.sampleType,
+                gender : metaA.gender,
+                id : metaA.id,
             ],
             cram,crai]
         }

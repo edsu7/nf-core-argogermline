@@ -1,9 +1,3 @@
-// TODO nf-core: If in doubt look at other nf-core/subworkflows to see how we are doing things! :)
-//               https://github.com/nf-core/modules/tree/master/subworkflows
-//               You can also ask for help via your pull request or on the #subworkflows channel on the nf-core Slack workspace:
-//               https://nf-co.re/join
-// TODO nf-core: A subworkflow SHOULD import at least two modules
-
 include { SONG_SCORE_DOWNLOAD as NORMAL_SONG_SCORE_DOWNLOAD             } from '../../icgc-argo-workflows/song_score_download/main'
 
 include { CRAM_RECALIBRATE as NORMAL_GATK4_RECALIBRATE                  } from '../cram_recalibrate/main'
@@ -52,10 +46,29 @@ workflow GERMLINE_VARIANTS {
     //CNVKit convert to VCF?
     //CNVKIt supplemental files
 
+    //Exome conf
+    //manta,strelka,deepvariant,cnvkit
+
+    //Gender conf
+    //cnvkit
+
     //Download Files
     NORMAL_SONG_SCORE_DOWNLOAD(tuple([study_id,analysis_id]))
     ch_versions=ch_versions.mix(NORMAL_SONG_SCORE_DOWNLOAD.out.versions)
     cumulative_versions=cumulative_versions.mix(NORMAL_SONG_SCORE_DOWNLOAD.out.versions)
+
+    NORMAL_SONG_SCORE_DOWNLOAD.out.analysis_json.map{
+        it -> 
+        [
+            experimentalStrategy : new groovy.json.JsonSlurper().parse(it).get('experiment').get('experimental_strategy'),
+            genomeBuild : new groovy.json.JsonSlurper().parse(it).get('workflow').get('genome_build'),
+            tumourNormalDesignation : new groovy.json.JsonSlurper().parse(it).get('samples').get(0).get("specimen").get("tumourNormalDesignation"),
+            sampleType : new groovy.json.JsonSlurper().parse(it).get("samples").get(0).get("sampleType"),
+            gender : new groovy.json.JsonSlurper().parse(it).get("samples").get(0).get("donor").get("gender"),
+            id : new groovy.json.JsonSlurper().parse(it).get("analysisId")
+            ]
+        }.set{ ch_meta }
+    
     //Generate intervals
     if (params.no_intervals){
         intervals_bed = Channel.fromPath(params.intervals_bed, checkIfExists: true).map{it -> [it,1]}
@@ -82,9 +95,9 @@ workflow GERMLINE_VARIANTS {
 
     //Recalibrate
     if (params.tools.split(',').contains('recalibrate')){
-        ch_normal_cram_for_recalibration=NORMAL_SONG_SCORE_DOWNLOAD.out.files
-            .map{cram,crai -> 
-            [[id : analysis_id],cram,crai]
+        ch_normal_cram_for_recalibration=NORMAL_SONG_SCORE_DOWNLOAD.out.files.combine(ch_meta)
+            .map{cram,crai,meta -> 
+            [meta,cram,crai]
             }
 
         NORMAL_GATK4_RECALIBRATE(
@@ -104,12 +117,11 @@ workflow GERMLINE_VARIANTS {
         ch_versions=ch_versions.mix(NORMAL_GATK4_RECALIBRATE.out.versions)
         cumulative_versions=cumulative_versions.mix(NORMAL_GATK4_RECALIBRATE.out.versions)
     } else {
-        ch_cram_variant_calling_normal = NORMAL_SONG_SCORE_DOWNLOAD.out.files
-            .map { cram,crai->
-                [[id: analysis_id], cram, crai]
+        ch_cram_variant_calling_normal = NORMAL_SONG_SCORE_DOWNLOAD.out.files.combine(ch_meta)
+            .map { cram,crai,meta->
+                [meta, cram, crai]
             }
     }
-
 
     //DEEP VARIANT
     if (params.tools.split(',').contains('deepvariant')){
@@ -119,6 +131,11 @@ workflow GERMLINE_VARIANTS {
                     [
                         [
                             id : meta.id,
+                            experimentalStrategy : meta.experimentalStrategy,
+                            genomeBuild : meta.genomeBuild,
+                            tumourNormalDesignation : meta.tumourNormalDesignation,
+                            sampleType : meta.sampleType ,
+                            gender : meta.gender,
                             num_intervals : num_intervals
                 ],  cram, crai, intervals_new]
             }
@@ -138,7 +155,7 @@ workflow GERMLINE_VARIANTS {
     if (params.tools.split(',').contains('cnvkit')){
         ch_normal_cnvkit = ch_cram_variant_calling_normal
             .map{meta,cram,crai->
-                [meta,file("NO_FILE"),cram]
+                [meta,[],cram]
         }
 
         GERMLINE_VARIANT_CNVKIT(
@@ -146,8 +163,6 @@ workflow GERMLINE_VARIANTS {
             fasta,
             fasta_fai,
             intervals_bed_combined.map{ meta,intervals -> intervals },
-            [],
-            false,
             NORMAL_SONG_SCORE_DOWNLOAD.out.analysis_json,
             ch_versions
         )
@@ -177,10 +192,14 @@ workflow GERMLINE_VARIANTS {
         ch_normal_manta=ch_cram_variant_calling_normal.combine(intervals_bed_gz_tbi)
             .map{meta, cram, crai, intervals_bed_gz_tbi, num_intervals ->
                 [
-                        [
-                            id : meta.id,
-                            num_intervals : num_intervals,
-
+                    [
+                        id : meta.id,
+                        experimentalStrategy : meta.experimentalStrategy,
+                        genomeBuild : meta.genomeBuild,
+                        tumourNormalDesignation : meta.tumourNormalDesignation,
+                        sampleType : meta.sampleType ,
+                        gender : meta.gender,
+                        num_intervals : num_intervals
                 ], cram, crai, intervals_bed_gz_tbi[0],intervals_bed_gz_tbi[1]]
             }
 
@@ -199,10 +218,14 @@ workflow GERMLINE_VARIANTS {
         ch_normal_strelka=ch_cram_variant_calling_normal.combine(intervals_bed_gz_tbi)
         .map{meta, cram, crai, intervals_bed_gz_tbi, num_intervals ->
                 [
-                        [
-                            id : meta.id,
-                            num_intervals : num_intervals,
-
+                    [
+                        id : meta.id,
+                        experimentalStrategy : meta.experimentalStrategy,
+                        genomeBuild : meta.genomeBuild,
+                        tumourNormalDesignation : meta.tumourNormalDesignation,
+                        sampleType : meta.sampleType ,
+                        gender : meta.gender,
+                        num_intervals : num_intervals
                 ], cram, crai, intervals_bed_gz_tbi[0], intervals_bed_gz_tbi[1]]
         }
 
@@ -227,6 +250,11 @@ workflow GERMLINE_VARIANTS {
                 [
                     [
                         id : meta.id,
+                        experimentalStrategy : meta.experimentalStrategy,
+                        genomeBuild : meta.genomeBuild,
+                        tumourNormalDesignation : meta.tumourNormalDesignation,
+                        sampleType : meta.sampleType ,
+                        gender : meta.gender,
                         num_intervals : num_intervals
                 ], 
                 cram, crai, intervals_bed, []]
@@ -259,6 +287,11 @@ workflow GERMLINE_VARIANTS {
                 [
                     [
                         id : meta.id,
+                        experimentalStrategy : meta.experimentalStrategy,
+                        genomeBuild : meta.genomeBuild,
+                        tumourNormalDesignation : meta.tumourNormalDesignation,
+                        sampleType : meta.sampleType ,
+                        gender : meta.gender,
                         num_intervals : num_intervals
                 ], 
                 cram, crai, [], [], intervals_bed]

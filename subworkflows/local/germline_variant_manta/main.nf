@@ -84,7 +84,13 @@ workflow GERMLINE_VARIANT_MANTA {
     .combine(analysis_json)
     .map {metaA,vcf,metaB,tbi,analysis_json ->
     [
-        [ id : metaA.id,
+        [ 
+            id : metaA.id,
+            experimentalStrategy : metaA.experimentalStrategy,
+            genomeBuild : metaA.genomeBuild,
+            tumourNormalDesignation : metaA.tumourNormalDesignation,
+            sampleType : metaA.sampleType ,
+            gender : metaA.gender,
             study_id : params.study_id,
             tool : "manta"
         ],
@@ -94,10 +100,8 @@ workflow GERMLINE_VARIANT_MANTA {
     //Generate payload
     PAYLOAD_GERMLINEVARIANT(
         ch_payload,
-        "",
-        "",
         ch_versions.unique().collectFile(name: 'collated_versions.yml'),
-        "manta"
+        false
     )
 
     //Gather temporary files

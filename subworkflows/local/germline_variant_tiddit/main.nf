@@ -39,9 +39,15 @@ workflow GERMLINE_VARIANT_TIDDIT {
     TABIX_BGZIPTABIX.out.gz_tbi.combine(analysis_json)
             .map { meta,vcf,tbi,analysis_json->
             [
-                [ id : meta.id,
-                  study_id : params.study_id,
-                  tool : "tiddit"
+                [
+                    id : meta.id,
+                    experimentalStrategy : meta.experimentalStrategy,
+                    genomeBuild : meta.genomeBuild,
+                    tumourNormalDesignation : meta.tumourNormalDesignation,
+                    sampleType : meta.sampleType ,
+                    gender : meta.gender,
+                    study_id : params.study_id,
+                    tool : "tiddit"
                 ]
                 ,[vcf, tbi],analysis_json]
             }.set{ch_payload}
@@ -49,10 +55,8 @@ workflow GERMLINE_VARIANT_TIDDIT {
     //Generate payload
     PAYLOAD_GERMLINEVARIANT(
         ch_payload,
-        "",
-        "",
         ch_versions.unique().collectFile(name: 'collated_versions.yml'),
-        "tiddit"
+        false
     )
 
     //Gather temporary files

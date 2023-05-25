@@ -85,9 +85,15 @@ workflow GERMLINE_VARIANT_STRELKA {
     ch_payload=merged_strelka_vcf.combine(merged_strelka_tbi).combine(analysis_json)
             .map { metaA,vcf,metaB,tbi,analysis_json->
             [
-                [ id : metaA.id,
-                  study_id : params.study_id,
-                  tool : "strelka"
+                [ 
+                    id : metaA.id,
+                    experimentalStrategy : metaA.experimentalStrategy,
+                    genomeBuild : metaA.genomeBuild,
+                    tumourNormalDesignation : metaA.tumourNormalDesignation,
+                    sampleType : metaA.sampleType ,
+                    gender : metaA.gender,
+                    study_id : params.study_id,
+                    tool : "strelka"
                 ]
                 ,[vcf, tbi],analysis_json]
             }
@@ -95,10 +101,8 @@ workflow GERMLINE_VARIANT_STRELKA {
     //Generate payload
     PAYLOAD_GERMLINEVARIANT(
         ch_payload,
-        "",
-        "",
         ch_versions.unique().collectFile(name: 'collated_versions.yml'),
-        "strelka"
+        false
     )
 
     //Gather temporary files

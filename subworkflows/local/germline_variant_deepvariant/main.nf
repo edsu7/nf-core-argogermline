@@ -88,9 +88,15 @@ workflow GERMLINE_VARIANT_DEEPVARIANT {
     ch_payload=deepvariant_vcf.combine(deepvariant_tbi).combine(analysis_json)
             .map { metaA,vcf,metaB,tbi,analysis_json->
             [
-                [ id : metaA.id,
-                  study_id : params.study_id,
-                  tool : "deepvariant"
+                [
+                    id : metaA.id,
+                    experimentalStrategy : metaA.experimentalStrategy,
+                    genomeBuild : metaA.genomeBuild,
+                    tumourNormalDesignation : metaA.tumourNormalDesignation,
+                    sampleType : metaA.sampleType ,
+                    gender : metaA.gender,
+                    study_id : params.study_id,
+                    tool : "deepvariant"
                 ]
                 ,[vcf, tbi],analysis_json]
             }
@@ -98,17 +104,17 @@ workflow GERMLINE_VARIANT_DEEPVARIANT {
     //Generate payload
     PAYLOAD_GERMLINEVARIANT(
         ch_payload,
-        "",
-        "",
         ch_versions.unique().collectFile(name: 'collated_versions.yml'),
-        "deepvariant"
+        false
     )
+
 
     //Gather temporary files
     ch_cleanup=DEEPVARIANT.out.vcf.map{meta,vcf -> [vcf]}
     .mix(TABIX_VC_DEEPVARIANT_VCF.out.tbi.map{meta,tbi -> [tbi]})
     .mix(MERGE_DEEPVARIANT_VCF.out.vcf.map{meta,vcf -> [vcf]})
-    .mix(PAYLOAD_GERMLINEVARIANT.out.payload_files.map{meta,analysis,files -> [analysis]}).collect()
+    .mix(PAYLOAD_GERMLINEVARIANT.out.payload_files.map{meta,analysis,files -> [analysis]})
+    .collect()
 
     //If Local is true, will be published into "output_dir" directory
     if (params.local==false){

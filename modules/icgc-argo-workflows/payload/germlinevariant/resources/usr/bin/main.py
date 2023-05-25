@@ -38,12 +38,11 @@ import yaml
 import csv
 import io
 import shutil
-#LUCA-KR.DO231106.SA602282.wxs.20210112.gatk-mutect2.somatic.snv.open-filter.vcf.gz
+
 workflow_process_map = {
-    'DNA Seq Germline Workflow': 'snv'
+    'DNA Seq Germline Variant Workflow': 'snv'
 }
 
-tool_list = ['strelka']
 
 def calculate_size(file_path):
     return os.stat(file_path).st_size
@@ -56,7 +55,7 @@ def calculate_md5(file_path):
             md5.update(chunk)
     return md5.hexdigest()
 
-def get_files_info(file_to_upload, date_str, analysis_dict, process_indicator,tool,new_dir):
+def get_files_info(file_to_upload, date_str, analysis_dict, process_indicator,tool,new_dir,pipeline_info,tarball):
     file_info = {
         'fileSize': calculate_size(file_to_upload),
         'fileMd5sum': calculate_md5(file_to_upload),
@@ -65,82 +64,106 @@ def get_files_info(file_to_upload, date_str, analysis_dict, process_indicator,to
             'data_category': "Simple Nucleotide Variation",
         }
     }
-    ### deepvariant
-    if tool=="deepvariant":
-        if re.match(r'.*.vcf.gz$', file_to_upload):
-            file_type = 'VCF'
-            file_info.update({'dataType': 'Raw SNV Calls'})
-            file_info['info'].update({'analysis_tools': ['DeepVariant']})
-        elif re.match(r'.*.vcf.gz.tbi$', file_to_upload):
-            file_type = 'TBI'
-            file_info.update({'dataType': 'VCF Index'})
-            file_info['info'].update({'analysis_tools': ['DeepVariant']})
+ 
+    if tarball=="false":
+        if tool=="deepvariant":
+            if re.match(r'.*.vcf.gz$', file_to_upload):
+                file_type = 'VCF'
+                file_info.update({'dataType': 'Raw SNV Calls'})
+                file_info['info'].update({'analysis_tools': [{key.split(":")[-1]:pipeline_info[key]} for key in pipeline_info.keys()]})
+            elif re.match(r'.*.vcf.gz.tbi$', file_to_upload):
+                file_type = 'TBI'
+                file_info.update({'dataType': 'VCF Index'})
+                file_info['info'].update({'analysis_tools': [{key.split(":")[-1]:pipeline_info[key]} for key in pipeline_info.keys()]})
+            else:
+                sys.exit('Error: unknown QC metrics file: %s' % file_to_upload)
+        elif tool=="strelka":
+            if re.match(r'.*.vcf.gz$', file_to_upload):
+                file_type = 'VCF'
+                file_info.update({'dataType': 'Raw SNV Calls'})
+                file_info['info'].update({'analysis_tools': [{key.split(":")[-1]:pipeline_info[key]} for key in pipeline_info.keys()]})
+            elif re.match(r'.*.vcf.gz.tbi$', file_to_upload):
+                file_type = 'TBI'
+                file_info.update({'dataType': 'VCF Index'})
+                file_info['info'].update({'analysis_tools': [{key.split(":")[-1]:pipeline_info[key]} for key in pipeline_info.keys()]})
+            else:
+                sys.exit('Error: unknown QC metrics file: %s' % file_to_upload)
+        elif tool=="tiddit":
+            if re.match(r'.*.vcf.gz$', file_to_upload):
+                file_type = 'VCF'
+                file_info.update({'dataType': 'Raw SNV Calls'})
+                file_info['info'].update({'analysis_tools': [{key.split(":")[-1]:pipeline_info[key]} for key in pipeline_info.keys()]})
+            elif re.match(r'.*.vcf.gz.tbi$', file_to_upload):
+                file_type = 'TBI'
+                file_info.update({'dataType': 'VCF Index'})
+                file_info['info'].update({'analysis_tools': [{key.split(":")[-1]:pipeline_info[key]} for key in pipeline_info.keys()]})
+            else:
+                sys.exit('Error: unknown QC metrics file: %s' % file_to_upload)
+        elif tool=="haplotypecaller" :
+            if re.match(r'.*.vcf.gz$', file_to_upload):
+                file_type = 'VCF'
+                file_info.update({'dataType': 'Raw SNV Calls'})
+                file_info['info'].update({'analysis_tools': [{key.split(":")[-1]:pipeline_info[key]} for key in pipeline_info.keys()]})
+            elif re.match(r'.*.vcf.gz.tbi$', file_to_upload):
+                file_type = 'TBI'
+                file_info.update({'dataType': 'VCF Index'})
+                file_info['info'].update({'analysis_tools': [{key.split(":")[-1]:pipeline_info[key]} for key in pipeline_info.keys()]})
+            else:
+                sys.exit('Error: unknown QC metrics file: %s' % file_to_upload)
+        elif tool=="manta":
+            if re.match(r'.*.vcf.gz$', file_to_upload):
+                file_type = 'VCF'
+                file_info.update({'dataType': 'Raw SNV Calls'})
+                file_info['info'].update({'analysis_tools': [{key.split(":")[-1]:pipeline_info[key]} for key in pipeline_info.keys()]})
+            elif re.match(r'.*.vcf.gz.tbi$', file_to_upload):
+                file_type = 'TBI'
+                file_info.update({'dataType': 'VCF Index'})
+                file_info['info'].update({'analysis_tools': [{key.split(":")[-1]:pipeline_info[key]} for key in pipeline_info.keys()]})
+            else:
+                sys.exit('Error: unknown QC metrics file: %s' % file_to_upload)
+        elif tool=="freebayes":
+            if re.match(r'.*.vcf.gz$', file_to_upload):
+                file_type = 'VCF'
+                file_info.update({'dataType': 'Raw SNV Calls'})
+                file_info['info'].update({'analysis_tools': [{key.split(":")[-1]:pipeline_info[key]} for key in pipeline_info.keys()]})
+            elif re.match(r'.*.vcf.gz.tbi$', file_to_upload):
+                file_type = 'TBI'
+                file_info.update({'dataType': 'VCF Index'})
+                file_info['info'].update({'analysis_tools': [{key.split(":")[-1]:pipeline_info[key]} for key in pipeline_info.keys()]})
+            else:
+                sys.exit('Error: unknown QC metrics file: %s' % file_to_upload)
+        elif tool=="cnvkit":
+            if re.match(r'.*.vcf.gz$', file_to_upload):
+                file_type = 'VCF'
+                file_info.update({'dataType': 'Raw SNV Calls'})
+                file_info['info'].update({'analysis_tools': [{key.split(":")[-1]:pipeline_info[key]} for key in pipeline_info.keys()]})
+            elif re.match(r'.*.vcf.gz.tbi$', file_to_upload):
+                file_type = 'TBI'
+                file_info.update({'dataType': 'VCF Index'})
+                file_info['info'].update({'analysis_tools': [{key.split(":")[-1]:pipeline_info[key]} for key in pipeline_info.keys()]})
+            else:
+                sys.exit('Error: unknown QC metrics file: %s' % file_to_upload)
         else:
             sys.exit('Error: unknown QC metrics file: %s' % file_to_upload)
-    elif tool=="strelka":
-        if re.match(r'.*.vcf.gz$', file_to_upload):
-            file_type = 'VCF'
-            file_info.update({'dataType': 'Raw SNV Calls'})
-            file_info['info'].update({'analysis_tools': ['Strelka']})
-        elif re.match(r'.*.vcf.gz.tbi$', file_to_upload):
-            file_type = 'TBI'
-            file_info.update({'dataType': 'VCF Index'})
-            file_info['info'].update({'analysis_tools': ['Strelka']})
-        else:
-            sys.exit('Error: unknown QC metrics file: %s' % file_to_upload)
-    elif tool=="tiddit":
-        if re.match(r'.*.vcf.gz$', file_to_upload):
-            file_type = 'VCF'
-            file_info.update({'dataType': 'Raw SNV Calls'})
-            file_info['info'].update({'analysis_tools': ['Tiddit']})
-        elif re.match(r'.*.vcf.gz.tbi$', file_to_upload):
-            file_type = 'TBI'
-            file_info.update({'dataType': 'VCF Index'})
-            file_info['info'].update({'analysis_tools': ['Tiddit']})
-        else:
-            sys.exit('Error: unknown QC metrics file: %s' % file_to_upload)
-    elif tool=="haplotypecaller":
-        if re.match(r'.*.vcf.gz$', file_to_upload):
-            file_type = 'VCF'
-            file_info.update({'dataType': 'Raw SNV Calls'})
-            file_info['info'].update({'analysis_tools': ['haplotypecaller']})
-        elif re.match(r'.*.vcf.gz.tbi$', file_to_upload):
-            file_type = 'TBI'
-            file_info.update({'dataType': 'VCF Index'})
-            file_info['info'].update({'analysis_tools': ['haplotypecaller']})
-        else:
-            sys.exit('Error: unknown QC metrics file: %s' % file_to_upload)
-    elif tool=="manta":
-        if re.match(r'.*.vcf.gz$', file_to_upload):
-            file_type = 'VCF'
-            file_info.update({'dataType': 'Raw SNV Calls'})
-            file_info['info'].update({'analysis_tools': ['Manta']})
-        elif re.match(r'.*.vcf.gz.tbi$', file_to_upload):
-            file_type = 'TBI'
-            file_info.update({'dataType': 'VCF Index'})
-            file_info['info'].update({'analysis_tools': ['Manta']})
-        else:
-            sys.exit('Error: unknown QC metrics file: %s' % file_to_upload)
-    elif tool=="freebayes":
-        if re.match(r'.*.vcf.gz$', file_to_upload):
-            file_type = 'VCF'
-            file_info.update({'dataType': 'Raw SNV Calls'})
-            file_info['info'].update({'analysis_tools': ['Freebayes']})
-        elif re.match(r'.*.vcf.gz.tbi$', file_to_upload):
-            file_type = 'TBI'
-            file_info.update({'dataType': 'VCF Index'})
-            file_info['info'].update({'analysis_tools': ['Freebayes']})
-        else:
-            sys.exit('Error: unknown QC metrics file: %s' % file_to_upload)
-    #elif tool=="cnvkit":
+    elif tarball=="true":
+        if tool=="cnvkit":
+            file_type = 'TGZ'
+            file_info.update({'dataType': "CNV Supplement"})
+        
+        file_info['info']['files_in_tgz']=[]
+        with tarfile.open(file_to_upload, 'r') as tar:
+            for member in tar.getmembers():
+                file_info['info']['files_in_tgz'].append(member.name)
+
     else:
         sys.exit('Error: unknown QC metrics file: %s' % file_to_upload)
-
+ 
     #LUCA-KR.DO231106.SA602282.wxs.20210112.gatk-mutect2.somatic.snv.open-filter.vcf.gz.tbi"
     #"TEST-PR.DO250183.SA610228.wxs.20230501.snv-strelka.gvcf.gz",
     suffix={
         "VCF":"vcf.gz",
-        "TBI": "vcf.gz.tbi",
+        "TBI":"vcf.gz.tbi",
+        "TGZ":"tgz"
     }
     # file naming patterns:
     #   pattern:  <argo_study_id>.<argo_donor_id>.<argo_sample_id>.<experiment_strategy>.<date>.<process_indicator>.<file_type>.<file_ext>
@@ -154,27 +177,19 @@ def get_files_info(file_to_upload, date_str, analysis_dict, process_indicator,to
         date_str,
         process_indicator,
         suffix[file_type]
-      ])    
-    
+      ])  
+
+    new_dir = 'out'
+    try:
+        os.mkdir(new_dir)
+    except FileExistsError:
+        pass
+
+    dst = os.path.join(os.getcwd(), new_dir, new_fname)
+    os.symlink(os.path.abspath(file_to_upload), dst)
+
     file_info['fileName'] = new_fname
     file_info['fileType'] = file_type
-
-    if re.match(r'cnvkit', file_to_upload):
-        with tarfile.open(file_to_upload, 'r') as tar:
-            for member in tar.getmembers():
-                file_info['info']['files_in_tgz'].append(member.name)
-
-            new_dir = 'out'
-            try:
-                os.mkdir(new_dir)
-            except FileExistsError:
-                pass
-
-            dst = os.path.join(os.getcwd(), new_dir, new_fname)
-            os.symlink(os.path.abspath(file_to_upload), dst)
-    else:
-        shutil.copyfile(os.path.realpath(file_to_upload),"/".join([new_dir,new_fname]))
-        ##os.symlink(os.path.realpath(file_to_upload),"/".join([new_dir,new_fname]))
 
     return file_info
 
@@ -198,7 +213,7 @@ def get_sample_info(sample_list):
 
     return samples
 
-def prepare_tarball(sampleId, qc_files, tool_list):
+def prepare_tarball(sampleId, qc_files, tool):
 
     tgz_dir = 'tarball'
     try:
@@ -206,20 +221,16 @@ def prepare_tarball(sampleId, qc_files, tool_list):
     except FileExistsError:
       pass
 
-    files_to_tar = {}
-    for tool in tool_list:
-      if not tool in files_to_tar: files_to_tar[tool] = []
-      for f in sorted(qc_files):
-        if tool in f:
-          files_to_tar[tool].append(f)   
-    
-    for tool in tool_list:
-      if not files_to_tar[tool]: continue
-      tarfile_name = f"{tgz_dir}/{sampleId}.{tool}.tgz"
-      with tarfile.open(tarfile_name, "w:gz", dereference=True) as tar:
-        for f in files_to_tar[tool]:
-          tar.add(f, arcname=os.path.basename(f))
+    files_to_tar=[]
+    for f in sorted(qc_files):
+        files_to_tar.append(f)   
 
+    tarfile_name = f"{tgz_dir}/{sampleId}.{tool}.tgz"
+    with tarfile.open(tarfile_name, "w:gz", dereference=True) as tar:
+        for f in files_to_tar:
+            tar.add(f, arcname=os.path.basename(f))
+
+    return(tarfile_name)
 def main():
     """
     Python implementation of tool: payload-gen-qc
@@ -234,8 +245,10 @@ def main():
     parser.add_argument("-b", "--genome_build", dest="genome_build", default="", help="Genome build")
     parser.add_argument("-w", "--wf-name", dest="wf_name", required=True, help="Workflow name")
     parser.add_argument("-s", "--wf-session", dest="wf_session", required=True, help="workflow session ID")
+    parser.add_argument("-r", "--wf-run", dest="wf_run", required=True, help="workflow run ID")
     parser.add_argument("-v", "--wf-version", dest="wf_version", required=True, help="Workflow version")
     parser.add_argument("-p", "--pipeline_yml", dest="pipeline_yml", required=False, help="Pipeline info in yaml")
+    parser.add_argument("-l", "--tarball", dest="tarball", required=True,default="false", help="Tarball files")
     parser.add_argument("-t", "--tool", dest="tool", required=True,type=str, help="Tool used for variant calling",
     choices=['strelka','cnvkit','deepvariant','tiddit','manta','haplotypecaller','freebayes']
     )
@@ -254,33 +267,38 @@ def main():
         'analysisType': {
             'name': 'variant_processing'
         },
+        "variant_class":"Germline",
         'studyId': analysis_dict.get('studyId'),
-        'info': {},
         'workflow': {
-            'workflow_name': args.wf_name,
+            'workflow_name': "%s-%s" % (args.wf_name,args.tool),
             'workflow_version': args.wf_version,
             'session_id': args.wf_session,
+            'genome_build': args.genome_build,
+            'run_id': args.wf_run,
+            "workflow_short_name": "%s-%s" % (args.wf_name.replace("DNA Seq","").replace("Workflow","").replace(" ",""),args.tool),
             'inputs': [
                 {
                     'analysis_type': analysis_dict['analysisType']['name'],
-                    'input_analysis_id': analysis_dict.get('analysisId')
+                    'normal_analysis_id': analysis_dict.get('analysisId')
                 }
             ],
-            'info': pipeline_info
         },
         'files': [],
         'experiment': analysis_dict.get('experiment'),
         'samples': get_sample_info(analysis_dict.get('samples'))
     }
+
+    for key in ['platform_model',"sequencing_center","sequencing_date","submitter_sequencing_experiment_id"]:
+        if payload['experiment'].get(key):
+            payload['experiment'].pop(key)
+    
     if args.genome_build:
       payload['workflow']['genome_build'] = args.genome_build
     if args.genome_annotation:
       payload['workflow']['genome_annotation'] = args.genome_annotation
 
     # pass `info` dict from seq_experiment payload to new payload
-    if 'info' in analysis_dict and isinstance(analysis_dict['info'], dict):
-      payload['info'] = analysis_dict['info']
-    else:
+    if 'info' in analysis_dict.keys():
       payload.pop('info')
 
     if 'library_strategy' in payload['experiment']:
@@ -296,13 +314,18 @@ def main():
     # generate date string
     date_str = date.today().strftime("%Y%m%d")
 
-    # prepare tarball to include all QC files generated by one tool
-    ##prepare_tarball(analysis_dict['samples'][0]['sampleId'], args.files_to_upload, tool_list)
 
-    process_indicator = ".".join([args.tool,"germline",workflow_process_map.get(args.wf_name)])
-    for f in sorted(args.files_to_upload):
-      file_info = get_files_info(f, date_str, analysis_dict, process_indicator,args.tool,new_dir)
-      payload['files'].append(file_info)
+    # prepare tarball to include all QC files generated by one tool
+    if args.tarball=="true":
+        process_indicator = ".".join([args.tool,"germline",args.tool+"-"+"supplement"])
+        tarball_file=prepare_tarball(analysis_dict['samples'][0]['sampleId'], args.files_to_upload, args.tool)
+        file_info = get_files_info(tarball_file, date_str, analysis_dict, process_indicator,args.tool,new_dir,pipeline_info,args.tarball)
+        payload['files'].append(file_info)
+    elif args.tarball=="false":
+        process_indicator = ".".join([args.tool,"germline",workflow_process_map.get(args.wf_name)])
+        for f in sorted(args.files_to_upload):
+            file_info = get_files_info(f, date_str, analysis_dict, process_indicator,args.tool,new_dir,pipeline_info,args.tarball)
+            payload['files'].append(file_info)
 
     with open("%s.%s.payload.json" % (str(uuid.uuid4()), args.wf_name.replace(" ","_")), 'w') as f:
         f.write(json.dumps(payload, indent=2))

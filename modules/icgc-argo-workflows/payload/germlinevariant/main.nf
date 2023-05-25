@@ -10,14 +10,12 @@ process PAYLOAD_GERMLINEVARIANT {
 
     input:  // input, make update as needed
       tuple val(meta), path(files_to_upload), path(metadata_analysis)
-      val genome_annotation
-      val genome_build
       path pipeline_yml
-      val tool
+      val tarball
 
 
     output:  // output, make update as needed
-      tuple val(meta), path("*.payload.json"), path("out/*{vcf.gz,vcf.gz.tbi}"), emit: payload_files
+      tuple val(meta), path("*.payload.json"), path("out/*"), emit: payload_files
       path "versions.yml", emit: versions
 
     script:
@@ -27,12 +25,13 @@ process PAYLOAD_GERMLINEVARIANT {
       main.py \
         -f ${files_to_upload} \
         -a ${metadata_analysis} \
-        -g "${genome_annotation}" \
-        -b "${genome_build}" \
-        -w "DNA Seq Germline Workflow" \
+        -b "${meta.genomeBuild}" \
+        -w "DNA Seq Germline Variant Workflow" \
+        -r ${workflow.runName} \
         -s "${workflow.sessionId}" \
         -v "${workflow.manifest.version}" \
-        -t "${tool}" \
+        -t "${meta.tool}" \
+        -l "${tarball}" \
         $arg_pipeline_yml
 
       cat <<-END_VERSIONS > versions.yml
