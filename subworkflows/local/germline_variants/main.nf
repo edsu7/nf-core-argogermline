@@ -143,8 +143,8 @@ workflow GERMLINE_VARIANTS {
         GERMLINE_VARIANT_DEEPVARIANT(
             ch_normal_deepvariant,
             dict,
-            fasta,
-            fasta_fai,
+            fasta.map{ it -> [[id:it[0].baseName], it] },
+            fasta_fai.map{ it -> [[id:it[0].baseName], it] },
             NORMAL_SONG_SCORE_DOWNLOAD.out.analysis_json,
             ch_versions
         )

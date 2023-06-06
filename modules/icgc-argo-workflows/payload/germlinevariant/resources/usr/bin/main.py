@@ -39,11 +39,6 @@ import csv
 import io
 import shutil
 
-workflow_process_map = {
-    'DNA Seq Germline Variant Workflow': 'snv'
-}
-
-
 def calculate_size(file_path):
     return os.stat(file_path).st_size
 
@@ -55,7 +50,7 @@ def calculate_md5(file_path):
             md5.update(chunk)
     return md5.hexdigest()
 
-def get_files_info(file_to_upload, date_str, analysis_dict, process_indicator,tool,new_dir,pipeline_info,tarball):
+def get_files_info(file_to_upload, date_str, analysis_dict, process_indicator,tool,new_dir,pipeline_info,tarball,data_type):
     file_info = {
         'fileSize': calculate_size(file_to_upload),
         'fileMd5sum': calculate_md5(file_to_upload),
@@ -69,7 +64,7 @@ def get_files_info(file_to_upload, date_str, analysis_dict, process_indicator,to
         if tool=="deepvariant":
             if re.match(r'.*.vcf.gz$', file_to_upload):
                 file_type = 'VCF'
-                file_info.update({'dataType': 'Raw SNV Calls'})
+                file_info.update({'dataType': 'Raw %s Calls' % data_type})
                 file_info['info'].update({'analysis_tools': [{key.split(":")[-1]:pipeline_info[key]} for key in pipeline_info.keys()]})
             elif re.match(r'.*.vcf.gz.tbi$', file_to_upload):
                 file_type = 'TBI'
@@ -80,7 +75,7 @@ def get_files_info(file_to_upload, date_str, analysis_dict, process_indicator,to
         elif tool=="strelka":
             if re.match(r'.*.vcf.gz$', file_to_upload):
                 file_type = 'VCF'
-                file_info.update({'dataType': 'Raw SNV Calls'})
+                file_info.update({'dataType': 'Raw %s Calls' % data_type})
                 file_info['info'].update({'analysis_tools': [{key.split(":")[-1]:pipeline_info[key]} for key in pipeline_info.keys()]})
             elif re.match(r'.*.vcf.gz.tbi$', file_to_upload):
                 file_type = 'TBI'
@@ -91,7 +86,7 @@ def get_files_info(file_to_upload, date_str, analysis_dict, process_indicator,to
         elif tool=="tiddit":
             if re.match(r'.*.vcf.gz$', file_to_upload):
                 file_type = 'VCF'
-                file_info.update({'dataType': 'Raw SNV Calls'})
+                file_info.update({'dataType': 'Raw %s Calls' % data_type})
                 file_info['info'].update({'analysis_tools': [{key.split(":")[-1]:pipeline_info[key]} for key in pipeline_info.keys()]})
             elif re.match(r'.*.vcf.gz.tbi$', file_to_upload):
                 file_type = 'TBI'
@@ -102,7 +97,7 @@ def get_files_info(file_to_upload, date_str, analysis_dict, process_indicator,to
         elif tool=="haplotypecaller" :
             if re.match(r'.*.vcf.gz$', file_to_upload):
                 file_type = 'VCF'
-                file_info.update({'dataType': 'Raw SNV Calls'})
+                file_info.update({'dataType': 'Raw %s Calls' % data_type})
                 file_info['info'].update({'analysis_tools': [{key.split(":")[-1]:pipeline_info[key]} for key in pipeline_info.keys()]})
             elif re.match(r'.*.vcf.gz.tbi$', file_to_upload):
                 file_type = 'TBI'
@@ -113,7 +108,7 @@ def get_files_info(file_to_upload, date_str, analysis_dict, process_indicator,to
         elif tool=="manta":
             if re.match(r'.*.vcf.gz$', file_to_upload):
                 file_type = 'VCF'
-                file_info.update({'dataType': 'Raw SNV Calls'})
+                file_info.update({'dataType': 'Raw %s Calls' % data_type})
                 file_info['info'].update({'analysis_tools': [{key.split(":")[-1]:pipeline_info[key]} for key in pipeline_info.keys()]})
             elif re.match(r'.*.vcf.gz.tbi$', file_to_upload):
                 file_type = 'TBI'
@@ -124,7 +119,7 @@ def get_files_info(file_to_upload, date_str, analysis_dict, process_indicator,to
         elif tool=="freebayes":
             if re.match(r'.*.vcf.gz$', file_to_upload):
                 file_type = 'VCF'
-                file_info.update({'dataType': 'Raw SNV Calls'})
+                file_info.update({'dataType': 'Raw %s Calls' % data_type})
                 file_info['info'].update({'analysis_tools': [{key.split(":")[-1]:pipeline_info[key]} for key in pipeline_info.keys()]})
             elif re.match(r'.*.vcf.gz.tbi$', file_to_upload):
                 file_type = 'TBI'
@@ -135,7 +130,7 @@ def get_files_info(file_to_upload, date_str, analysis_dict, process_indicator,to
         elif tool=="cnvkit":
             if re.match(r'.*.vcf.gz$', file_to_upload):
                 file_type = 'VCF'
-                file_info.update({'dataType': 'Raw SNV Calls'})
+                file_info.update({'dataType': 'Raw %s Calls' % data_type})
                 file_info['info'].update({'analysis_tools': [{key.split(":")[-1]:pipeline_info[key]} for key in pipeline_info.keys()]})
             elif re.match(r'.*.vcf.gz.tbi$', file_to_upload):
                 file_type = 'TBI'
@@ -250,8 +245,8 @@ def main():
     parser.add_argument("-p", "--pipeline_yml", dest="pipeline_yml", required=False, help="Pipeline info in yaml")
     parser.add_argument("-l", "--tarball", dest="tarball", required=True,default="false", help="Tarball files")
     parser.add_argument("-t", "--tool", dest="tool", required=True,type=str, help="Tool used for variant calling",
-    choices=['strelka','cnvkit','deepvariant','tiddit','manta','haplotypecaller','freebayes']
-    )
+    choices=['strelka','cnvkit','deepvariant','tiddit','manta','haplotypecaller','freebayes'])
+    parser.add_argument("-d", "--data-type", dest="data_type", required=True,type=str, help="Data type for upload",choices=['InDel',"SNV","CNV"])
 
     args = parser.parse_args()
     
@@ -319,12 +314,12 @@ def main():
     if args.tarball=="true":
         process_indicator = ".".join([args.tool,"germline",args.tool+"-"+"supplement"])
         tarball_file=prepare_tarball(analysis_dict['samples'][0]['sampleId'], args.files_to_upload, args.tool)
-        file_info = get_files_info(tarball_file, date_str, analysis_dict, process_indicator,args.tool,new_dir,pipeline_info,args.tarball)
+        file_info = get_files_info(tarball_file, date_str, analysis_dict, process_indicator,args.tool,new_dir,pipeline_info,args.tarball,args.data_type)
         payload['files'].append(file_info)
     elif args.tarball=="false":
-        process_indicator = ".".join([args.tool,"germline",workflow_process_map.get(args.wf_name)])
+        process_indicator = ".".join([args.tool,"germline",args.data_type.lower()])
         for f in sorted(args.files_to_upload):
-            file_info = get_files_info(f, date_str, analysis_dict, process_indicator,args.tool,new_dir,pipeline_info,args.tarball)
+            file_info = get_files_info(f, date_str, analysis_dict, process_indicator,args.tool,new_dir,pipeline_info,args.tarball,args.data_type)
             payload['files'].append(file_info)
 
     with open("%s.%s.payload.json" % (str(uuid.uuid4()), args.wf_name.replace(" ","_")), 'w') as f:

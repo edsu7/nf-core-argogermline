@@ -3,7 +3,7 @@ process SONG_GET {
     label 'process_single'
 
     pod = [secret: workflow.runName + "-secret", mountPath: "/tmp/rdpc_secret"]
-    container "${ task.ext.song_container ?: 'ghcr.io/overture-stack/song-client' }:${ task.ext.song_container_version ?: '5.0.2' }"
+    container "${ params.song_container ?: 'ghcr.io/overture-stack/song-client' }:${ params.song_container_version ?: '5.0.2' }"
 
     if (workflow.containerEngine == "singularity") {
         containerOptions "--bind \$(pwd):/song-client/logs"
@@ -23,9 +23,9 @@ process SONG_GET {
     task.ext.when == null || task.ext.when
 
     script:
-    def args = params.args ?: ''
-    def prefix = params.prefix ?: "${analysis_id}"
-    def song_url = params.song_url ?: ""
+    def args = task.ext.args ?: ''
+    def prefix = task.ext.prefix ?: "${analysis_id}"
+    def song_url = params.song_url_download ?: params.song_url
     def accessToken = params.api_token ?: "`cat /tmp/rdpc_secret/secret`"
     def VERSION = params.song_container_version ?: '5.0.2'
     """
@@ -33,7 +33,7 @@ process SONG_GET {
     export CLIENT_STUDY_ID=${study_id}
     export CLIENT_ACCESS_TOKEN=${accessToken}
 
-    sing search -a ${analysis_id} > ${prefix}.analysis.json
+    sing search -a ${analysis_id} $args > ${prefix}.analysis.json
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

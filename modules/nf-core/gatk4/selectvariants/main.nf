@@ -1,4 +1,4 @@
-process GATK4_MERGEVCFS {
+process GATK4_SELECTVARIANTS {
     tag "$meta.id"
     label 'process_medium'
 
@@ -8,13 +8,12 @@ process GATK4_MERGEVCFS {
         'biocontainers/gatk4:4.4.0.0--py36hdfd78af_0' }"
 
     input:
-    tuple val(meta), path(vcf)
-    tuple val(meta2), path(dict)
+    tuple val(meta), path(vcf), path(vcf_idx), path (intervals)
 
     output:
-    tuple val(meta), path('*.vcf.gz'), emit: vcf
-    tuple val(meta), path("*.tbi")   , emit: tbi
-    path  "versions.yml"             , emit: versions
+    tuple val(meta), path("*.selectvariants.vcf.gz")       , emit: vcf
+    tuple val(meta), path("*.selectvariants.vcf.gz.tbi")   , emit: tbi
+    path "versions.yml"		                               , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -22,21 +21,19 @@ process GATK4_MERGEVCFS {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def input_list = vcf.collect{ "--INPUT $it"}.join(' ')
-    def reference_command = dict ? "--SEQUENCE_DICTIONARY $dict" : ""
-
+    def interval = intervals ? "--intervals ${intervals}" : ""
     def avail_mem = 3072
     if (!task.memory) {
-        log.info '[GATK MergeVcfs] Available memory not known - defaulting to 3GB. Specify process memory requirements to change this.'
+        log.info '[GATK SelectVariants] Available memory not known - defaulting to 3GB. Specify process memory requirements to change this.'
     } else {
         avail_mem = (task.memory.mega*0.8).intValue()
     }
     """
-    gatk --java-options "-Xmx${avail_mem}M" MergeVcfs \\
-        $input_list \\
-        --OUTPUT ${prefix}.vcf.gz \\
-        $reference_command \\
-        --TMP_DIR . \\
+    gatk --java-options "-Xmx${avail_mem}M" SelectVariants \\
+        --variant $vcf \\
+        --output ${prefix}.selectvariants.vcf.gz \\
+        $interval \\
+        --tmp-dir . \\
         $args
 
     cat <<-END_VERSIONS > versions.yml
@@ -48,8 +45,8 @@ process GATK4_MERGEVCFS {
     stub:
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    touch ${prefix}.vcf.gz
-    touch ${prefix}.vcf.gz.tbi
+    touch ${prefix}.selectvariants.vcf.gz
+    touch ${prefix}.selectvariants.vcf.gz.tbi
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

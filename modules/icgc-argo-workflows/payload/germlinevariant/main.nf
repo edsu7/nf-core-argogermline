@@ -32,6 +32,7 @@ process PAYLOAD_GERMLINEVARIANT {
         -v "${workflow.manifest.version}" \
         -t "${meta.tool}" \
         -l "${tarball}" \
+        -d "${meta.dataType}" \
         $arg_pipeline_yml
 
       cat <<-END_VERSIONS > versions.yml

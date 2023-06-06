@@ -8,8 +8,12 @@ include { GATK4_HAPLOTYPECALLER                                         } from '
 include { GATK4_MERGEVCFS as MERGE_HAPLOTYPECALLER                      } from '../../../modules/nf-core/gatk4/mergevcfs/main'
 include { GATK4_CNNSCOREVARIANTS as CNNSCOREVARIANTS                    } from '../../../modules/nf-core/gatk4/cnnscorevariants/main'
 include { GATK4_FILTERVARIANTTRANCHES as FILTERVARIANTTRANCHES          } from '../../../modules/nf-core/gatk4/filtervarianttranches/main'
-include { PAYLOAD_GERMLINEVARIANT                                       } from '../../../modules/icgc-argo-workflows/payload/germlinevariant/main'
-include { SONG_SCORE_UPLOAD                                             } from '../../icgc-argo-workflows/song_score_upload/main'
+include { GATK4_SELECTVARIANTS as SELECT_VCF_INDEL                      } from '../../../modules/nf-core/gatk4/selectvariants/main'
+include { GATK4_SELECTVARIANTS as SELECT_VCF_SNV                        } from '../../../modules/nf-core/gatk4/selectvariants/main'
+include { PAYLOAD_GERMLINEVARIANT as PAYLOAD_VCF_INDEL_GERMLINEVARIANT  } from '../../../modules/icgc-argo-workflows/payload/germlinevariant/main'
+include { PAYLOAD_GERMLINEVARIANT as PAYLOAD_VCF_SNV_GERMLINEVARIANT    } from '../../../modules/icgc-argo-workflows/payload/germlinevariant/main'
+include { SONG_SCORE_UPLOAD as SONG_SCORE_UP_VCF_INDEL                  } from '../../icgc-argo-workflows/song_score_upload/main'
+include { SONG_SCORE_UPLOAD as SONG_SCORE_UP_VCF_SNV                    } from '../../icgc-argo-workflows/song_score_upload/main'
 include { CLEANUP                                                       } from '../../../modules/icgc-argo-workflows/cleanup/main'
 
 workflow GERMLINE_VARIANT_GATK_HAPLOTYPECALLER {
@@ -60,8 +64,14 @@ workflow GERMLINE_VARIANT_GATK_HAPLOTYPECALLER {
         .map{ meta, vcf ->
 
             new_meta = [
-                            id:             meta.id,
-                            num_intervals:  meta.num_intervals,
+                        id: meta.id,
+                        experimentalStrategy : meta.experimentalStrategy,
+                        genomeBuild : meta.genomeBuild,
+                        tumourNormalDesignation : meta.tumourNormalDesignation,
+                        sampleType : meta.sampleType ,
+                        gender : meta.gender,
+                        study_id : meta.study_id,
+                        num_intervals:  meta.num_intervals
                         ]
 
                 [groupKey(new_meta, new_meta.num_intervals), vcf]
@@ -114,8 +124,34 @@ workflow GERMLINE_VARIANT_GATK_HAPLOTYPECALLER {
     )
     ch_versions = ch_versions.mix(FILTERVARIANTTRANCHES.out.versions)
 
+    // Recombine VCF and TBI to make a single payload
+    select_vcf=FILTERVARIANTTRANCHES.out.vcf
+    .combine(FILTERVARIANTTRANCHES.out.tbi)
+    .map{ meta, vcf, metaB, tbi ->
+        [[
+            id: meta.id,
+            experimentalStrategy : meta.experimentalStrategy,
+            genomeBuild : meta.genomeBuild,
+            tumourNormalDesignation : meta.tumourNormalDesignation,
+            sampleType : meta.sampleType ,
+            gender : meta.gender,
+            study_id : meta.study_id,
+            num_intervals:  meta.num_intervals,
+            tool : "haplotypecaller"
+        ],vcf,tbi,[]]
+    }
+
+    //Filter for Indels
+    SELECT_VCF_INDEL(select_vcf)
+    ch_versions = ch_versions.mix(SELECT_VCF_INDEL.out.versions)
+
+
+    //Filter for SNVs
+    SELECT_VCF_SNV(select_vcf)
+    ch_versions = ch_versions.mix(SELECT_VCF_SNV.out.versions)
+
     //Manipulate for payload ingestion
-    ch_payload=FILTERVARIANTTRANCHES.out.vcf.combine(FILTERVARIANTTRANCHES.out.tbi).combine(analysis_json)
+    ch_payload_vcf_indel=SELECT_VCF_INDEL.out.vcf.combine(SELECT_VCF_INDEL.out.tbi).combine(analysis_json)
             .map { metaA,vcf,metaB,tbi,analysis_json->
             [
                 [
@@ -125,15 +161,39 @@ workflow GERMLINE_VARIANT_GATK_HAPLOTYPECALLER {
                     tumourNormalDesignation : metaA.tumourNormalDesignation,
                     sampleType : metaA.sampleType ,
                     gender : metaA.gender,
-                    study_id : params.study_id,
-                    tool : "haplotypecaller"
+                    study_id : metaA.study_id,
+                    dataType : "InDel",
+                    tool : metaA.tool
+                ]
+                ,[vcf, tbi],analysis_json]
+            }
+
+    ch_payload_vcf_snv=SELECT_VCF_SNV.out.vcf.combine(SELECT_VCF_SNV.out.tbi).combine(analysis_json)
+            .map { metaA,vcf,metaB,tbi,analysis_json->
+            [
+                [
+                    id : metaA.id,
+                    experimentalStrategy : metaA.experimentalStrategy,
+                    genomeBuild : metaA.genomeBuild,
+                    tumourNormalDesignation : metaA.tumourNormalDesignation,
+                    sampleType : metaA.sampleType ,
+                    gender : metaA.gender,
+                    study_id : metaA.study_id,
+                    dataType : "SNV",
+                    tool : metaA.tool
                 ]
                 ,[vcf, tbi],analysis_json]
             }
 
     //Generate payload
-    PAYLOAD_GERMLINEVARIANT(
-        ch_payload,
+    PAYLOAD_VCF_INDEL_GERMLINEVARIANT(
+        ch_payload_vcf_indel,
+        ch_versions.unique().collectFile(name: 'collated_versions.yml'),
+        false
+    )
+
+    PAYLOAD_VCF_SNV_GERMLINEVARIANT(
+        ch_payload_vcf_snv,
         ch_versions.unique().collectFile(name: 'collated_versions.yml'),
         false
     )
@@ -143,19 +203,30 @@ workflow GERMLINE_VARIANT_GATK_HAPLOTYPECALLER {
     .mix(MERGE_HAPLOTYPECALLER.out.vcf.map{meta,vcf -> [vcf]})
     .mix(CNNSCOREVARIANTS.out.vcf.map{meta,vcf -> [vcf]})
     .mix(FILTERVARIANTTRANCHES.out.vcf.map{meta,vcf -> [vcf]})
-    .mix(PAYLOAD_GERMLINEVARIANT.out.payload_files.map{meta,analysis,files -> [analysis]})
+    .mix(SELECT_VCF_INDEL.out.vcf.map{meta,vcf -> [vcf]})
+    .mix(SELECT_VCF_SNV.out.vcf.map{meta,vcf -> [vcf]})
+    .mix(PAYLOAD_VCF_INDEL_GERMLINEVARIANT.out.payload_files.map{meta,analysis,files -> [analysis]})
+    .mix(PAYLOAD_VCF_SNV_GERMLINEVARIANT.out.payload_files.map{meta,analysis,files -> [analysis]})
     .collect()
 
     //If Local is true, will be published into "output_dir" directory
     if (params.local==false){
         //Upload variants
-        //SONG_SCORE_UPLOAD(PAYLOAD_GERMLINEVARIANT.out.payload_files)
+        SONG_SCORE_UP_VCF_INDEL(PAYLOAD_VCF_INDEL_GERMLINEVARIANT)
+        SONG_SCORE_UP_VCF_SNV(PAYLOAD_VCF_SNV_GERMLINEVARIANT)
         if (params.cleanup){
-            CLEANUP(ch_cleanup.collect(),SONG_SCORE_UPLOAD.analysis_id)
+            CLEANUP(
+                ch_cleanup.collect(),
+                SONG_SCORE_UP_VCF_INDEL.out.analysis_id
+                .combine(SONG_SCORE_UP_VCF_SNV.out.analysis_id).collect()
+            )
         }
     } else {
      if (params.cleanup){
-        CLEANUP(ch_cleanup.collect(),PAYLOAD_GERMLINEVARIANT.out.payload_files)
+        CLEANUP(ch_cleanup.collect(),
+        PAYLOAD_VCF_INDEL_GERMLINEVARIANT.out.payload_files.map{meta,analysis,files -> [analysis]}
+        .combine(PAYLOAD_VCF_SNV_GERMLINEVARIANT.out.payload_files.map{meta,analysis,files -> [analysis]})
+        )
         }       
     }
 

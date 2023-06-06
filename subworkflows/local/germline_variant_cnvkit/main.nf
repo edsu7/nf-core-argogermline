@@ -63,6 +63,7 @@ workflow GERMLINE_VARIANT_CNVKIT {
                 sampleType : meta.sampleType ,
                 gender : meta.gender,
                 study_id : params.study_id,
+                dataType : "CNV",
                 tool : "cnvkit"
                 ]
                 ,[cns,cnr,cnn,bed,png,pdf].flatten().collect(),analysis_json
@@ -80,6 +81,7 @@ workflow GERMLINE_VARIANT_CNVKIT {
                     sampleType : meta.sampleType ,
                     gender : meta.gender,
                     study_id : params.study_id,
+                    dataType : "CNV",
                     tool : "cnvkit"
                     ]
                     ,[vcf, tbi],analysis_json]
